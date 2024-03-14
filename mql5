@@ -1,0 +1,151 @@
+
+//+------------------------------------------------------------------+
+//|                                                   Exodus Account Protector |
+//|                                                   forexroboteasy.com |
+//|                                                      Forex Robot Easy Team |
+//+------------------------------------------------------------------+
+//| This code is developed to protect Forex traders' accounts from significant drawdown. |
+//| The utility works on both live and evaluation accounts, providing an effective risk management tool. |
+//+------------------------------------------------------------------+
+
+// Chart and Default Settings
+extern string ChartSymbol = 'EURUSD';
+extern int ChartTimeframe = PERIOD_M1;
+extern double MaxDrawdownBalance = 0.04; // 4% of Account Balance
+extern double MaxDrawdownEquity = 0.04; // 4% of Account Balance
+extern double TargetProfitBalance = 0.01; // 1% of Account Balance
+extern double TargetProfitEquity = 0.01; // 1% of Account Balance
+extern int ResetHour = 16; // Reset time in 24-hour format
+
+// Account Protection Variables
+double accountBalance;
+double accountEquity;
+double maxDrawdownBalance;
+double maxDrawdownEquity;
+double targetProfitBalance;
+double targetProfitEquity;
+bool isLiveAccount;
+bool isEvaluationAccount;
+bool isProprietaryFirmAccount;
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                                   |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    accountBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+    accountEquity = AccountInfoDouble(ACCOUNT_EQUITY);
+    
+    // Check Account Type
+    if (AccountInfoInteger(ACCOUNT_TYPE) == ACCOUNT_REAL)
+    {
+        isLiveAccount = true;
+    }
+    else if (AccountInfoInteger(ACCOUNT_TYPE) == ACCOUNT_DEMO)
+    {
+        isEvaluationAccount = true;
+    }
+    
+    // Check Proprietary Firm Compatibility
+    if (AccountCompany() == 'FTMO' || AccountCompany() == 'MFF')
+    {
+        isProprietaryFirmAccount = true;
+    }
+    
+    // Calculate Max Drawdown and Target Profit based on Account Balance
+    maxDrawdownBalance = accountBalance * MaxDrawdownBalance;
+    maxDrawdownEquity = accountBalance * MaxDrawdownEquity;
+    targetProfitBalance = accountBalance * TargetProfitBalance;
+    targetProfitEquity = accountBalance * TargetProfitEquity;
+    
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert tick function                                             |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+    // Update Account Balance and Equity
+    accountBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+    accountEquity = AccountInfoDouble(ACCOUNT_EQUITY);
+    
+    // Calculate Drawdown
+    double drawdownBalance = accountBalance - AccountInfoDouble(ACCOUNT_PROFIT);
+    double drawdownEquity = accountEquity - AccountInfoDouble(ACCOUNT_PROFIT);
+    
+    // Check if Drawdown exceeds Max Drawdown
+    if (drawdownBalance > maxDrawdownBalance || drawdownEquity > maxDrawdownEquity)
+    {
+        // Take appropriate action to protect the account
+        // ...
+        // Code to close positions, disable trading, etc.
+        // ...
+    }
+}
+
+//+------------------------------------------------------------------+
+//| Custom function to reset the utility at specified time           |
+//+------------------------------------------------------------------+
+void ResetUtility()
+{
+    // Reset parameters and calculations to default values
+    maxDrawdownBalance = accountBalance * MaxDrawdownBalance;
+    maxDrawdownEquity = accountBalance * MaxDrawdownEquity;
+    targetProfitBalance = accountBalance * TargetProfitBalance;
+    targetProfitEquity = accountBalance * TargetProfitEquity;
+}
+
+//+------------------------------------------------------------------+
+//| Custom function to check if it's time to reset the utility        |
+//+------------------------------------------------------------------+
+bool IsResetTime()
+{
+    datetime currentTime = TimeLocal();
+    int currentHour = TimeHour(currentTime);
+    
+    if (currentHour == ResetHour)
+        return true;
+    
+    return false;
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                                 |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+    // Perform necessary cleanup tasks
+    // ...
+    // Code to close positions, enable trading, etc.
+    // ...
+}
+
+//+------------------------------------------------------------------+
+//| Custom function to handle proprietary firm account requirements  |
+//+------------------------------------------------------------------+
+void HandleProprietaryFirmAccount()
+{
+    // Implement additional requirements specified by proprietary firms
+    // ...
+    // Code to handle specific account protection mechanisms
+    // ...
+}
+
+//+------------------------------------------------------------------+
+//| Expert start function                                            |
+//+------------------------------------------------------------------+
+void OnStart()
+{
+    // Check if it's time to reset the utility
+    if (IsResetTime())
+    {
+        ResetUtility();
+    }
+    
+    // Check if it's a proprietary firm account
+    if (isProprietaryFirmAccount)
+    {
+        HandleProprietaryFirmAccount();
+    }
+}
